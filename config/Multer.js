@@ -2,10 +2,14 @@ const multer = require("multer");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "./img/");
+    if (req.body.role == "ADMIN") {
+      cb(null, "./img/admin/");
+    } else {
+      cb(null, "./img/user");
+    }
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname); // unique filename
+    cb(null, file.originalname);
   },
 });
 

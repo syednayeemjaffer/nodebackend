@@ -1,4 +1,4 @@
-const {getAllUsers,getUserById,getUser,registerUser,updateUser,loginUser,deleteUser   } = require('../controllers/UserController');
+const {getAllUsers,getUserById,getUser,registerUser,imgUpload,updateUser,loginUser,deleteUser   } = require('../controllers/UserController');
 const {authenticateToken,authorization} = require('../middlewares/AuthMiddleware');
 const express = require('express');
 const router = express.Router();
@@ -7,8 +7,8 @@ const multerConfig = require('../config/Multer');
 
 const img = multer({storage : multerConfig});
 
-
-router.post('/register', img.single('img'), registerUser);
+router.post('/img',img.single('img'),imgUpload);
+router.post('/register', registerUser);
 router.post('/login', loginUser);
 
 router.get('/users',authenticateToken,authorization('ADMIN'), getAllUsers);

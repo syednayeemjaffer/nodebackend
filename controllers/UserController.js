@@ -59,14 +59,21 @@ exports.getUser = async (req, res) => {
   }
 };
 
+exports.imgUpload = (req,res) => {
+  if(!req.file){
+    return res.status(400).json({message:"Add Img profile.."});
+  }
+  const imgPath = `http://localhost:3030/${req.body.role === "ADMIN" ? "admin" : "user"}/${req.file.originalname}`;
+  return res.status(200).json({message:"Img uploaded successfully", url: imgPath});
+}
 exports.registerUser = async (req, res) => {
   try {
-    const { username, email, phoneNumber, password, role } = req.body;
+    const { username, email, img, phoneNumber, password, role } = req.body;
     if (!username) {
       return res.status(400).json({ message: "Username is required" });
     }
-    if(!req.file) {
-      return res.status(400).json({message:"Add Img profile.."})
+    if(!img){
+      return res.status(400).json({ message: "Image is required" });
     }
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
@@ -91,13 +98,12 @@ exports.registerUser = async (req, res) => {
     if (!hashedPassword) {
       return res.status(500).json({ message: "Error hashing password" });
     }
-    // Save the hashed password under the correct key
     const newUser = new User({
       username,
-      img:req.file ? req.file.path : null, 
+      img,
       email,
       phoneNumber,
-      password: hashedPassword, // Corrected key
+      password: hashedPassword, 
       role,
     });
     await newUser.save();
