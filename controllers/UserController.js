@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const img = require("../config/Multer");
 
 exports.getAllUsers = async (req, res) => {
   try {
@@ -8,20 +9,26 @@ exports.getAllUsers = async (req, res) => {
     if (users) {
       return res
         .status(200)
-        .json({ message: "Users retrieved successfully", users });
+        .json({
+          status: true,
+          message: "Users retrieved successfully",
+          users,
+        });
     }
     return res.status(404).json({ message: "No users found" });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: "Server error", error: error.message });
+      .json({ status: false, message: "Server error", error: error.message });
   }
 };
 
 exports.getUserById = async (req, res) => {
   try {
     if (req.params.id === "undefined") {
-      return res.status(400).json({ message: "User ID is required" });
+      return res
+        .status(400)
+        .json({ status: false, message: "User ID is required" });
     }
     const user = await User.findById(req.params.id).select(
       "username email phoneNumber role"
@@ -30,13 +37,13 @@ exports.getUserById = async (req, res) => {
     if (user) {
       return res
         .status(200)
-        .json({ message: "User retrieved successfully", user });
+        .json({ status: true, message: "User retrieved successfully", user });
     }
-    return res.status(404).json({ message: "User not found" });
+    return res.status(404).json({ status: false, message: "User not found" });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: "Server error", error: error.message });
+      .json({ status: false, message: "Server error", error: error.message });
   }
 };
 
@@ -47,63 +54,121 @@ exports.getUser = async (req, res) => {
       "username email phoneNumber role"
     );
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res
+        .status(404)
+        .json({ status: false, message: "User not found" });
     }
     return res
       .status(200)
-      .json({ message: "User retrieved successfully", user });
+      .json({ status: true, message: "User retrieved successfully", user });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: "Server error", error: error.message });
+      .json({ status: false, message: "Server error", error: error.message });
   }
 };
 
-exports.imgUpload = (req,res) => {
-  if(!req.file){
-    return res.status(400).json({message:"Add Img profile.."});
-  }
-  const imgPath = `http://localhost:3030/${req.body.role === "ADMIN" ? "admin" : "user"}/${req.file.originalname}`;
-  return res.status(200).json({message:"Img uploaded successfully", url: imgPath});
-}
+
+exports.imgUpload = (req, res) => {
+  const upload = img.single("img");
+
+  upload(req, res, function (err) {
+    console.log(err);
+
+    if (err) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).json({
+          status: false,
+          message: "File is too large. Maximum size is 3 MB.",
+        });
+      }
+      if (err.message === "IMG_TYPE_ERROR") {
+        return res.status(400).json({
+          status: false,
+          message: "Only png, jpg, svg are accepted",
+        });
+      }
+      return res.status(500).json({
+        status: false,
+        message: "Something went wrong during upload",
+        error: err.message,
+      });
+    }
+
+    // ✅ Now multer has run, safe to check req.file
+    if (!req.file) {
+      return res.status(400).json({
+        status: false,
+        message: "Add Img profile..",
+      });
+    }
+
+    const imgPath = `http://localhost:3030/${
+      req.body.role === "ADMIN" ? "admin" : "user"
+    }/${req.file.originalname}`;
+
+    return res.status(200).json({
+      status: true,
+      message: "Img uploaded successfully",
+      url: imgPath,
+    });
+  });
+};
+
+
+
 exports.registerUser = async (req, res) => {
   try {
     const { username, email, img, phoneNumber, password, role } = req.body;
     if (!username) {
-      return res.status(400).json({ message: "Username is required" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Username is required" });
     }
-    if(!img){
-      return res.status(400).json({ message: "Image is required" });
+    if (!img) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Image is required" });
     }
     if (!email) {
-      return res.status(400).json({ message: "Email is required" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Email is required" });
     }
     if (!phoneNumber) {
-      return res.status(400).json({ message: "Phone number is required" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Phone number is required" });
     }
     if (phoneNumber.length != 10) {
       return res
         .status(400)
-        .json({ message: "Phone number must be 10 digits" });
+        .json({ status: false, message: "Phone number must be 10 digits" });
     }
     if (!password) {
-      return res.status(400).json({ message: "Password is required" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Password is required" });
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "Email already in use" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Email already in use" });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     if (!hashedPassword) {
-      return res.status(500).json({ message: "Error hashing password" });
+      return res
+        .status(500)
+        .json({ status: false, message: "Error hashing password" });
     }
     const newUser = new User({
       username,
       img,
       email,
       phoneNumber,
-      password: hashedPassword, 
+      password: hashedPassword,
       role,
     });
     await newUser.save();
@@ -114,11 +179,15 @@ exports.registerUser = async (req, res) => {
 
     return res
       .status(201)
-      .json({ message: "User registered successfully", user: newUser1 });
+      .json({
+        status: true,
+        message: "User registered successfully",
+        user: newUser1,
+      });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: "Server error", error: error.message });
+      .json({ status: false, message: "Server error", error: error.message });
   }
 };
 
@@ -134,13 +203,17 @@ exports.updateUser = async (req, res) => {
     if (updateUser) {
       return res
         .status(200)
-        .json({ message: "User updated successfully", user: updateUser });
+        .json({
+          success: true,
+          message: "User updated successfully",
+          user: updateUser,
+        });
     }
-    return res.status(404).json({ message: "User not found" });
+    return res.status(404).json({ status: false, message: "User not found" });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: "Server error", error: error.message });
+      .json({ status: false, message: "Server error", error: error.message });
   }
 };
 
@@ -148,17 +221,19 @@ exports.deleteUser = async (req, res) => {
   try {
     const user = req.user;
     if (user.role !== "ADMIN") {
-      res.status(403).json({ message: "Access denied" });
+      res.status(403).json({ status: false, message: "Access denied" });
     }
     const deleteUser = await User.findByIdAndDelete(user.userId);
     if (deleteUser) {
-      return res.status(200).json({ message: "User deleted successfully" });
+      return res
+        .status(200)
+        .json({ status: true, message: "User deleted successfully" });
     }
-    return res.status(404).json({ message: "User not found" });
+    return res.status(404).json({ status: false, message: "User not found" });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: "Server error", error: error.message });
+      .json({ status: false, message: "Server error", error: error.message });
   }
 };
 
@@ -167,20 +242,26 @@ exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required" });
+    return res
+      .status(400)
+      .json({ status: false, message: "Email and password are required" });
   }
 
   try {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res
+        .status(404)
+        .json({ status: false, message: "User not found" });
     }
 
     const passwordMatched = await bcrypt.compare(password, user.password);
 
     if (!passwordMatched) {
-      return res.status(401).json({ message: "Invalid password" });
+      return res
+        .status(401)
+        .json({ status: false, message: "Invalid password" });
     }
 
     const token = jwt.sign(
@@ -191,10 +272,10 @@ exports.loginUser = async (req, res) => {
 
     return res
       .status(200)
-      .json({ message: "Login successful", token, success: true });
+      .json({ status: true, message: "Login successful", token });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: "Server error", error: error.message });
+      .json({ status: false, message: "Server error", error: error.message });
   }
 };

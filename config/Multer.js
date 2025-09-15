@@ -13,4 +13,22 @@ const storage = multer.diskStorage({
   },
 });
 
-module.exports = storage;
+const fileFilter = (req, file, cb) => {
+  const type = ['png','jpg','svg'];
+  const ext = file.originalname.split('.')[1];
+  console.log(ext);
+  if (type.includes(ext)) {
+    cb(null, true);
+  } else {
+    
+    cb(new Error("IMG_TYPE_ERROR"));
+  }
+};
+
+const img = multer({
+  storage: storage,
+  limits: { fileSize: 3 * 1024 * 1024 * 1024 },
+  fileFilter: fileFilter,
+});
+
+module.exports = img; 
