@@ -9,7 +9,7 @@ const storage = multer.diskStorage({
     }
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname);
+    cb(null, Date.now() + "-" + file.originalname);
   },
 });
 
@@ -27,7 +27,7 @@ const fileFilter = (req, file, cb) => {
 
 const img = multer({
   storage: storage,
-  limits: { fileSize: 3 * 1024 * 1024 * 1024 },
+  limits: { fileSize: 3 * 1024 * 1024 },
   fileFilter: fileFilter,
 });
 

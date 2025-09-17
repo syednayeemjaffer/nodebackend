@@ -95,7 +95,6 @@ exports.imgUpload = (req, res) => {
       });
     }
 
-    // ✅ Now multer has run, safe to check req.file
     if (!req.file) {
       return res.status(400).json({
         status: false,
@@ -103,9 +102,9 @@ exports.imgUpload = (req, res) => {
       });
     }
 
-    const imgPath = `http://localhost:3030/${
-      req.body.role === "ADMIN" ? "admin" : "user"
-    }/${req.file.originalname}`;
+    // ✅ Use multer's generated filename
+    const folder = req.body.role === "ADMIN" ? "admin" : "user";
+    const imgPath = `http://localhost:3030/${folder}/${req.file.filename}`;
 
     return res.status(200).json({
       status: true,
@@ -114,6 +113,7 @@ exports.imgUpload = (req, res) => {
     });
   });
 };
+
 
 
 
@@ -219,17 +219,15 @@ exports.updateUser = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
   try {
-    const user = req.user;
-    if (user.role !== "ADMIN") {
-      res.status(403).json({ status: false, message: "Access denied" });
+    if(req.params.id === undefined){
+      return res.status(400).json({status: false , message:"Id is required.."});
     }
-    const deleteUser = await User.findByIdAndDelete(user.userId);
-    if (deleteUser) {
-      return res
-        .status(200)
-        .json({ status: true, message: "User deleted successfully" });
+    const deleted = await User.findByIdAndDelete(req.params.id);
+    if(!deleted){
+      return res.status(400).json({status:false,message : "deleteUser is not completed"});
     }
-    return res.status(404).json({ status: false, message: "User not found" });
+    return res.status(200).json({status : true , "message" : "user is deleted.."});
+
   } catch (error) {
     return res
       .status(500)

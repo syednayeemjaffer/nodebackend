@@ -7,8 +7,8 @@ const bodyParser = require('body-parser');
 const app = express();
 const connectDB = require('./config/Database');
 const userRoutes = require('./routes/UserRoutes');
-const { swaggerSpec, swaggerUi } = require("./config/swagger");
-
+const swaggerJson = require('./swagger.json');
+const swaggerUi = require('swagger-ui-express');
 connectDB();
 
 app.use(cors());
@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static("img"));
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api-docs',swaggerUi.serve, swaggerUi.setup(swaggerJson));
 
 app.use('/api', userRoutes);
 
