@@ -21,6 +21,21 @@ exports.getAllUsers = async (req, res) => {
       .status(500)
       .json({ status: false, message: "Server error", error: error.message });
   }
+  // User.find()
+  //   .select("username email phoneNumber role")
+  //   .then((users) => {
+  //     if (users) {
+  //       return res
+  //         .status(200)
+  //         .json({ status: true, message: "User retrived successfully", users });
+  //     }
+  //     return res.status(404).json({ status: false, message: "no user found" });
+  //   })
+  //   .catch((error) => {
+  //     return res
+  //       .status(500)
+  //       .json({ status: false, message: "Server error", error: error.message });
+  //   });
 };
 
 exports.getUserById = async (req, res) => {
@@ -54,9 +69,7 @@ exports.getUser = async (req, res) => {
       "username email phoneNumber role"
     );
     if (!user) {
-      return res
-        .status(404)
-        .json({ status: false, message: "User not found" });
+      return res.status(404).json({ status: false, message: "User not found" });
     }
     return res
       .status(200)
@@ -67,7 +80,6 @@ exports.getUser = async (req, res) => {
       .json({ status: false, message: "Server error", error: error.message });
   }
 };
-
 
 exports.imgUpload = (req, res) => {
   const upload = img.single("img");
@@ -113,9 +125,6 @@ exports.imgUpload = (req, res) => {
     });
   });
 };
-
-
-
 
 exports.registerUser = async (req, res) => {
   try {
@@ -177,13 +186,11 @@ exports.registerUser = async (req, res) => {
       "username email phoneNumber role"
     );
 
-    return res
-      .status(201)
-      .json({
-        status: true,
-        message: "User registered successfully",
-        user: newUser1,
-      });
+    return res.status(201).json({
+      status: true,
+      message: "User registered successfully",
+      user: newUser1,
+    });
   } catch (error) {
     return res
       .status(500)
@@ -201,13 +208,11 @@ exports.updateUser = async (req, res) => {
       { new: true }
     );
     if (updateUser) {
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message: "User updated successfully",
-          user: updateUser,
-        });
+      return res.status(200).json({
+        success: true,
+        message: "User updated successfully",
+        user: updateUser,
+      });
     }
     return res.status(404).json({ status: false, message: "User not found" });
   } catch (error) {
@@ -219,15 +224,18 @@ exports.updateUser = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
   try {
-    if(req.params.id === undefined){
-      return res.status(400).json({status: false , message:"Id is required.."});
+    if (req.params.id === undefined) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Id is required.." });
     }
     const deleted = await User.findByIdAndDelete(req.params.id);
-    if(!deleted){
-      return res.status(400).json({status:false,message : "deleteUser is not completed"});
+    if (!deleted) {
+      return res
+        .status(400)
+        .json({ status: false, message: "deleteUser is not completed" });
     }
-    return res.status(200).json({status : true , "message" : "user is deleted.."});
-
+    return res.status(200).json({ status: true, message: "user is deleted.." });
   } catch (error) {
     return res
       .status(500)
@@ -249,9 +257,7 @@ exports.loginUser = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res
-        .status(404)
-        .json({ status: false, message: "User not found" });
+      return res.status(404).json({ status: false, message: "User not found" });
     }
 
     const passwordMatched = await bcrypt.compare(password, user.password);
